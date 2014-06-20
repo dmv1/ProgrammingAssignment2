@@ -74,10 +74,21 @@ makeCacheMatrix <- function(x = matrix()) {
 }
 
 
-## cacheSolve takes a matrix as an argument and returns the inverse of that matrix
+## cacheSolve takes an object of type makeCacheMatrix as an argument and returns the inverse of that matrix
 # you can also pass additional arguments (designated as ...), all of these are the same arguments allowed in the R solve() method
 # allowable additional arguments (...) can be found using ?solve in the console
+# returns - either the cached inverse matrix (if it is saved) or calculates the inverse and stores it in the makeCacheMatrix object for later use
+
 
 cacheSolve <- function(x, ...) {
-    solve(x, ...)
+    mi <- x$getinverse()
+    if(! is.null(mi)){
+        message("obtianing cached inverse vector")
+        return(mi)
+    }
+    matrixX <- x$get()
+    mi <- solve(matrixX, ...)
+    x$setinverse(mi)
+    
+    return(mi)
 }
