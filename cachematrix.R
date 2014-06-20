@@ -4,6 +4,26 @@
 
 ## The Code Returns the Inverse of a Square Matrix but more importantly is used to teach the concept of Closures and Environmental Variables in R
 
+## Thought Process in Code Construction
+## ************************************
+
+## As I worked through this assignment, I agree with many on the forums that it was a challenging one. I do not have an issue with this class pushing us in these type of assignments because in the end that is why I am in enrolled in this class.
+
+## There is something I learned from this assignment that in the end would have made things more difficult for some, but I am passing it along in my approach to this assignment.
+
+## In Object-Oriented Programming (for those in the know, I appreciate the fact that R and closures in R are not object-oriented in the strict sense), one attempts to encapsulate code. Both in the example code for Cached means as well as the approach many have taken for the Matrix assignment, you are required to create an initial object (makeCacheMatrix object) and then pass this to the createMatrix method.
+
+## My approach and thinking for real world issues is to look at it from the following perspective. If I have a matrix and am looking to obtain the inverse of this in an optimized way, I want to call a method to do the heavy lifting without me being aware of it. I do not want to have to create an object (closure) and then manipulate this to extract the original matrix to another method that will either return the cached inverted matrix or calculate and store this for repeated calls for the inverse. 
+
+## With this mindset, I modified the createMatrix method so that it would take either a makeCacheMatrix object or a matrix directly. Inside this function, I check to see if the argument passed to the createMatrix method is of class type list (which is the class type returned from the makeCacheMatrix) or of class type matrix. [Please note this is not a great way to check since other lists could be passed to this method and errors or failure will occur but I did not want to make this absolutely applicable due to time constraints]. 
+
+## If the method determines a matrix was passed to the method, I create the makeCacheMatrix object from within this function and then either see if there is a cached inverse of this matrix or create and store the inverse in this object. If an object (list of makeCacheMatrix) was passed, then I extract the matrix and/or inverse from this object and return the inverse.
+
+## In this way, a user of this code only needs to understand that passing a matrix will return the inverse of this matrix in the most efficient manner, either the cached inverse or the newly created which is then stored for later return when the method is called again.
+
+## Hope you understand my thinking and the use of this code. Further instructions can be found below.
+
+
 ## Create a function closure which takes a matrix and the matrix inverse allowing getter and setter accessor methods
 
 # How to use this code to understand Closures
@@ -45,27 +65,27 @@
 #                   - getinverse - takes no arguments and returns the inverted matrix stored in the variable mi
 #   Examples for using this method can be found above
     
-makeCacheMatrix <- function(x = matrix()) {
+makeCacheMatrix <- function(initial_matrix = matrix()) {
     # set inverse matrix store to NULL
-    mi <- NULL
+    inverse_matrix <- NULL
 
     # set initial matrix to variable x
-    set <- function(y){
-        x <<- y
-        mi <<- NULL #clear (or NULL) inveser matrix in closure
+    set <- function(m){
+        initial_matrix <<- m
+        inverse_matrix <<- NULL #clear (or NULL) inveser matrix in closure
     }
     
     # get accessor method for inverse of initial matrix
     get <- function(){
-        x
+        return(initial_matrix)
     }
     
     setinverse <- function(inverse){
-        mi <<- inverse
+        inverse_matrix <<- inverse
     }
     
     getinverse <- function(){
-        mi
+        return(inverse_matrix)
     }
     
     list(set = set, get = get,
@@ -81,14 +101,39 @@ makeCacheMatrix <- function(x = matrix()) {
 
 
 cacheSolve <- function(x, ...) {
-    mi <- x$getinverse()
-    if(! is.null(mi)){
-        message("obtianing cached inverse vector")
-        return(mi)
-    }
-    matrixX <- x$get()
-    mi <- solve(matrixX, ...)
-    x$setinverse(mi)
+    #initialize inverse matrix variable as NULL
+    matrix_inverse = NULL
     
-    return(mi)
+    # test to see if argument pass to cacheSolve is of class matrix
+    if(class(x) == "matrix") {
+        makeCacheObject <- makeCacheMatrix()
+        makeCacheObject$set(x)
+        # once created obtain inverse matrix (if none, returns NULL)
+        matrix_inverse <- makeCacheObject$getinverse()
+    }
+    # if argument passed is not matrix, check to see if it is a list (ie passed argument is already an object of makeCacheMatrix)
+    # this is a big assumption and if it is not a list of makeCacheMatrix, code will fail
+    if(class(x) == "list"){
+        makeCacheObject <- x
+        matrix_inverse <- x$getinverse() #collect cached inverse matrix
+    }
+    
+    # test to see if matrix_inverse is not NULL (ie already has a cached inverse matrix)
+    if(! is.null(matrix_inverse)){
+        message("obtianing cached inverse vector")
+        return(matrix_inverse)
+    }
+    #if no inverse matrix stored, create it from pass in matrix
+    else {
+        # create inverse matrix using solve method built in R
+        matrix_inverse <- solve(makeCacheObject$get(), ...)
+        # cache the inverse matrix
+        makeCacheObject$setinverse(matrix_inverse)
+        
+        #return the inverse matrix
+        return(matrix_inverse)
+    }
+
+    # if there are issues, return NULL from this method
+    return(NULL)
 }
